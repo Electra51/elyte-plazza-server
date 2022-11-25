@@ -21,6 +21,7 @@ async function run() {
         const categoriesCollection = client.db('icebox').collection('categories');
         const productsCollection = client.db('icebox').collection('products');
         const bookingsCollection = client.db('icebox').collection('bookings');
+        const usersCollection = client.db('icebox').collection('users');
  
 
         app.get('/categories', async (req, res) => {
@@ -71,6 +72,17 @@ async function run() {
             const result = await bookingsCollection.insertOne(booking);
             res.send(result);
         })
+
+
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            console.log(user);
+            const result = await usersCollection.insertOne(user);
+            console.log(result)
+            res.send(result);
+        })
+
+
     }
     finally {
 
