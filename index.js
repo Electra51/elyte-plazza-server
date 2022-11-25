@@ -31,16 +31,19 @@ async function run() {
             const id = req.params.id;
             const query = { category_id: id };
             const product = await productsCollection.find(query).toArray();
+            console.log(product);
             res.send(product);
         })
 
-        // app.get('/products/:id', async (req, res) => {
-        //     const id = req.params.id;
-        //     const query = { category_id: id };
-        //     const product = await productsCollection.find(query).toArray();
-        //     console.log(product);
-        //     res.send(product);
-        // })
+        app.get('/products/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { category_id: id };
+            const product = await productsCollection.find(query).toArray();
+            console.log(product);
+            res.send(product);
+        })
+
+        
         app.get('/products', async (req, res) => { 
          
             const query = {};
