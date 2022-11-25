@@ -20,38 +20,49 @@ async function run() {
     try {
         const categoriesCollection = client.db('icebox').collection('categories');
         const productsCollection = client.db('icebox').collection('products');
+        const bookingsCollection = client.db('icebox').collection('bookings');
+ 
 
-        app.get('/categories', async (req, res) => { 
+        app.get('/categories', async (req, res) => {
          
             const query = {};
             const category = await categoriesCollection.find(query).toArray();
             res.send(category);
         })
-        app.get('/category/:id', async (req, res) => { 
+        app.get('/category/:id', async (req, res) => {
             const id = req.params.id;
+            console.log(req.params.id);
             const query = { category_id: id };
-            const product = await productsCollection.find(query).toArray();
-            console.log(product);
-            res.send(product);
+            const product_category = await productsCollection.findOne(query);
+            console.log(product_category);
+            res.send(product_category);
         })
 
-        app.get('/products/:id', async (req, res) => {
-            const id = req.params.id;
-            const query = { category_id: id };
-            const product = await productsCollection.find(query).toArray();
-            console.log(product);
-            res.send(product);
-        })
+        // app.get('/products/:id', async (req, res) => {
+        //     console.log(req.params.id);
+        //     const id = req.params.id;
+        //     const products =await productsCollection.findOne(ObjectId(id) === id);
+        //     res.send(products);
+        // const query = { category_id: id };
+        // const product = await productsCollection.find(query).toArray();
+        // console.log(product);
+        // res.send(product);
+        // })
 
-        
-        app.get('/products', async (req, res) => { 
+
+        app.get('/products', async (req, res) => {
          
             const query = {};
             const product = await productsCollection.find(query).toArray();
             res.send(product);
         })
-     
 
+        app.post('/bookings', async (req, res) => {
+            const booking = req.body;
+            console.log(booking);
+            const result = await bookingsCollection.insertOne(booking);
+            res.send(result);
+        })
     }
     finally {
 
