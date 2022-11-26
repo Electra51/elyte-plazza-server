@@ -49,6 +49,7 @@ async function run() {
         const productsCollection = client.db('icebox').collection('products');
         const bookingsCollection = client.db('icebox').collection('bookings');
         const usersCollection = client.db('icebox').collection('users');
+        const paymentsCollection = client.db('icebox').collection('payments')
  
 
         app.get('/categories', async (req, res) => {
@@ -133,6 +134,21 @@ async function run() {
                 clientSecret: paymentIntent.client_secret,
             });
         });
+
+        app.post('/payments', async (req, res) =>{
+            const payment = req.body;
+            const result = await paymentsCollection.insertOne(payment);
+            const id = payment.bookingId
+            const filter = {_id: ObjectId(id)}
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
+            }
+            const updatedResult = await bookingsCollection.updateOne(filter, updatedDoc)
+            res.send(updatedResult);
+        })
         
 
         app.get('/jwt', async (req, res) => {
@@ -146,8 +162,34 @@ async function run() {
             }
             res.status(403).send({ accessToken: '' })
            
-        })
+        }) 
 
+        app.put('/users/admin/:id', verifyJWT, async (req, res) => {
+            const decodedEmail = req.decoded.email;
+            const query = { email: decodedEmail };
+            const user = await usersCollection.findOne(query);
+            if (user?.role !== 'admin') {
+                return res.status(403).send({
+                    message: 'forbidden access'
+                })
+            }
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) }
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: {
+                    role: 'admin'
+                }
+            }
+            const result = await usersCollection.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        });
+
+        app.get('/users', async (req, res) => {
+            const query = {};
+            const users = await usersCollection.find(query).toArray();
+            res.send(users);
+        });
 
         app.post('/users', async (req, res) => {
             const user = req.body;
