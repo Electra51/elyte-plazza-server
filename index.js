@@ -50,34 +50,50 @@ async function run() {
         const bookingsCollection = client.db('icebox').collection('bookings');
         const usersCollection = client.db('icebox').collection('users');
         const paymentsCollection = client.db('icebox').collection('payments')
+        const addProductsCollection = client.db('icebox').collection('addProducts')
  
 
         app.get('/categories', async (req, res) => {
-         
             const query = {};
             const category = await categoriesCollection.find(query).toArray();
             res.send(category);
         })
-        app.get('/category/:id', async (req, res) => {
-            const id = req.params.id;
-            console.log(req.params.id);
-            const query = { category_id: id };
-            const product_category = await productsCollection.findOne(query);
-            console.log(product_category);
+        // app.get('/category/:id', async (req, res) => {
+        //     const id = req.params.id;
+        //     console.log(req.params.id);
+        //     const query = { category_id: id };
+        //     const product_category = await productsCollection.findOne(query);
+        //     console.log(product_category);
+        //     res.send(product_category);
+        // })
+
+        app.get('/category', async (req, res) => {
+            const name = req.query.name;
+            const query = { name: name };
+            const product_category= await productsCollection.find(query).toArray();
             res.send(product_category);
+            console.log(product_category);
         })
 
         // app.get('/products/:id', async (req, res) => {
-        //     console.log(req.params.id);
-        //     const id = req.params.id;
+            // console.log(req.params.id);
+            // const id = req.query.id;
         //     const products =await productsCollection.findOne(ObjectId(id) === id);
         //     res.send(products);
-        // const query = { category_id: id };
+        // const query = {  _id:category_id };
         // const product = await productsCollection.find(query).toArray();
         // console.log(product);
         // res.send(product);
         // })
 
+
+
+//category select er jonno
+        app.get('/categoriesName', async (req, res) => {
+            const query = {};
+            const category = await categoriesCollection.find(query).project({name:1}).toArray();
+            res.send(category);
+        })
 
         app.get('/products', async (req, res) => {
          
@@ -102,7 +118,7 @@ async function run() {
         })
 
 
-
+//bookings korte
         app.post('/bookings', async (req, res) => {
             const booking = req.body;
             console.log(booking);
@@ -110,6 +126,7 @@ async function run() {
             res.send(result);
         })
 
+//id onujayi booking get kora
         app.get('/bookings/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
@@ -117,11 +134,11 @@ async function run() {
             res.send(booking);
         })
 
-        //payment
+//payment
         app.post('/create-payment-intent', async (req, res) => {
             const booking = req.body;
             const price = booking.price;
-            const amount = price * 100;
+            const amount = parseInt(price) * 100;
 
             const paymentIntent = await stripe.paymentIntents.create({
                 currency: 'usd',
@@ -135,22 +152,22 @@ async function run() {
             });
         });
 
-        app.post('/payments', async (req, res) =>{
-            const payment = req.body;
-            const result = await paymentsCollection.insertOne(payment);
-            const id = payment.bookingId
-            const filter = {_id: ObjectId(id)}
-            const updatedDoc = {
-                $set: {
-                    paid: true,
-                    transactionId: payment.transactionId
-                }
-            }
-            const updatedResult = await bookingsCollection.updateOne(filter, updatedDoc)
-            res.send(updatedResult);
-        })
+        // app.post('/payments', async (req, res) =>{
+        //     const payment = req.body;
+        //     const result = await paymentsCollection.insertOne(payment);
+        //     const id = payment.bookingId
+        //     const filter = {_id: ObjectId(id)}
+        //     const updatedDoc = {
+        //         $set: {
+        //             paid: true,
+        //             transactionId: payment.transactionId
+        //         }
+        //     }
+        //     const updatedResult = await bookingsCollection.updateOne(filter, updatedDoc)
+        //     res.send(updatedResult);
+        // })
         
-
+//jwt token
         app.get('/jwt', async (req, res) => {
             const email = req.query.email;
             const query = { email: email };
@@ -163,16 +180,23 @@ async function run() {
             res.status(403).send({ accessToken: '' })
            
         }) 
-
-        app.put('/users/admin/:id', verifyJWT, async (req, res) => {
-            const decodedEmail = req.decoded.email;
-            const query = { email: decodedEmail };
+//admin ki na check
+        app.get('/users/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email }
             const user = await usersCollection.findOne(query);
-            if (user?.role !== 'admin') {
-                return res.status(403).send({
-                    message: 'forbidden access'
-                })
-            }
+            res.send({ isAdmin: user?.role === 'admin' });
+        })
+//admin bananor api
+        app.put('/users/admin/:id', async (req, res) => {
+            // const decodedEmail = req.decoded.email;
+            // const query = { email: decodedEmail };
+            // const user = await usersCollection.findOne(query);
+            // if (user?.role !== 'admin') {
+            //     return res.status(403).send({
+            //         message: 'forbidden access'
+            //     })
+            // }
             const id = req.params.id;
             const filter = { _id: ObjectId(id) }
             const options = { upsert: true };
@@ -184,6 +208,13 @@ async function run() {
             const result = await usersCollection.updateOne(filter, updatedDoc, options);
             res.send(result);
         });
+
+        // app.get('/users', async (req, res) => {
+        //     const role = req.query.role;
+        //     const query = { role: role };
+        //     const users = await usersCollection.find(query).toArray();
+        //     res.send(users);
+        // });
 
         app.get('/users', async (req, res) => {
             const query = {};
@@ -198,7 +229,23 @@ async function run() {
             console.log(result)
             res.send(result);
         })
+         //myproduct get
+         app.get('/addProducts', async (req, res) => {
+             const query = {};
+           
+            const myProducts = await addProductsCollection.find(query).toArray();
+            console.log(myProducts)
+            res.send(myProducts);
+        })
 
+        //addproduct post
+        app.post('/addProducts', async (req, res) => {
+            const product = req.body;
+            console.log(product);
+            const result = await addProductsCollection.insertOne(product);
+            console.log(result)
+            res.send(result);
+        })
 
     }
     finally {
