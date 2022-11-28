@@ -62,13 +62,7 @@ async function run() {
             res.send(category);
         })
 
-        // app.get('/category', async (req, res) => {
-        //     const id = req.params.id;
-        //     console.log(id);
-        //     const query = {};
-        //     const category = await categoriesCollection.find(query).toArray();
-        //     res.send(category);
-        // })
+       
 
 
         app.get('/category/:id', async (req, res) => {
@@ -82,30 +76,13 @@ async function run() {
         app.get('/products/:id', async (req, res) => {
             const id = req.params.id;
             console.log(req.params.id);
-            if (category_id === category_id) {
+           
                 const product_category = await productsCollection.find({category_id : id}).toArray();
                 console.log(product_category);
                 res.send(product_category);
-            }
+           
            
         })
-
-       
-
-       
-
-        // app.get('/products/:id', async (req, res) => {
-            // console.log(req.params.id);
-            // const id = req.query.id;
-        //     const products =await productsCollection.findOne(ObjectId(id) === id);
-        //     res.send(products);
-        // const query = {  _id:category_id };
-        // const product = await productsCollection.find(query).toArray();
-        // console.log(product);
-        // res.send(product);
-        // })
-
-
 
 //category select er jonno
         app.get('/categoriesName', async (req, res) => {
@@ -121,14 +98,14 @@ async function run() {
             res.send(product);
         })
 
-        app.get('/bookings', verifyJWT, async (req, res) => {
+        app.get('/bookings',  async (req, res) => {
             const email = req.query.email;
 
-            const decodedEmail = req.decoded.email;
-
-            if (email !== decodedEmail) {
-                return res.status(403).send({ message: 'forbidden access' });
-            }
+            // const decodedEmail = req.decoded.email;
+            // verifyJWT,
+            // if (email !== decodedEmail) {
+            //     return res.status(403).send({ message: 'forbidden access' });
+            // }
 
             const query = { email: email };
             const bookings= await bookingsCollection.find(query).toArray();
@@ -202,15 +179,30 @@ async function run() {
            
         }) 
 //admin ki na check
-        // app.get('/users/admin/:email', async (req, res) => {
-        //     const email = req.params.email;
-        //     const query = { email }
-        //     const user = await usersCollection.findOne(query);
-        //     res.send({ isAdmin: user?.role === 'admin' });
-        // })
+app.get('/users/admin/:email', async (req, res) => {
+    const email = req.params.email;
+    const query = { email }
+    const user = await usersCollection.findOne(query);
+    res.send({isAdmin: user?.role === 'admin' });
+})
+        
+        //seller ki na check
+        app.get('/users/seller/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email }
+            const user = await usersCollection.findOne(query);
+            res.send({isSeller: user?.userType === 'seller' });
+        })
 
+         //buyer ki na check
+         app.get('/users/buyer/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email }
+            const user = await usersCollection.findOne(query);
+            res.send({isBuyer: user?.userType === 'buyer' });
+        })
 
-
+        
        
 
         //allbuyers seller
@@ -277,6 +269,14 @@ async function run() {
             res.send(result);
         })
 
+        //delete Buyer
+        app.delete('/products/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await productsCollection.deleteOne(query);
+            res.send(result);
+        })
+
          //myproduct get
          app.get('/addProducts', async (req, res) => {
              const query = {};
@@ -300,8 +300,8 @@ async function run() {
             const role = req.params.role;
             console.log(role);
             const query = { role: role };
-            const productsCollection = await addProductsCollection.find(query).toArray();
-            res.send(productsCollection);
+            const proCollection = await addProductsCollection.find(query).toArray();
+            res.send(proCollection);
         });
         //make verify
 
@@ -329,7 +329,7 @@ async function run() {
     res.send(result);
     });
 
-   //make available
+   //make advertise
 
         app.put('/addProducts/available/:id',  async (req, res) => {
         
@@ -355,9 +355,46 @@ async function run() {
         res.send(result);
         });
         
+//report
+        app.put('/products/report/:id',  async (req, res) => {
+        
+            //     const decodedEmail = req.decoded.email;
+            //  const query = { email: decodedEmail };
+            //  const user = await addProductsCollection.findOne(query);
+            //  if (user?.role !== 'available') {
+            //      return res.status(403).send({
+            //          message: 'forbidden access'
+            //      })
+            //  }
+
+
+        const id = req.params.id;
+        const filter = { _id: ObjectId(id) }
+        const options = { upsert: true };
+        const updatedDoc = {
+            $set: {
+                type: 'report'
+            }
+        }
+        const result = await productsCollection.updateOne(filter, updatedDoc, options);
+        res.send(result);
+        });
+
+        // reported product
+        app.get('/products/report/:type', async (req, res) => {
+            const type= req.params.type;
+            console.log(type);
+            const query = { type:type};
+            const reportedItem = await productsCollection.find(query).toArray();
+            res.send(reportedItem);
+        });
+
+
+     
         
 
     }
+
     finally {
 
     }
